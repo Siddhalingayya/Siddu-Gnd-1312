@@ -86,6 +86,7 @@ export default StudentList;
 
 */
 
+/*
 import React, { useState } from "react";
 import jsPDF from "jspdf";
 
@@ -179,4 +180,109 @@ const StudentList = ({ details, onAttendanceComplete }) => {
 };
 
 export default StudentList;
+
+*/
+
+
+
+import React, { useState } from "react";
+
+const AttendanceForm = ({ onStartAttendance }) => {
+  const today = new Date().toISOString().split("T")[0]; // Set today's date
+
+  const [formData, setFormData] = useState({
+    date: today,
+    period: "1", // Default to the first period
+    section: "A", // Default to section A
+    branch: "Mechanical", // Default to Mechanical branch
+    faculty: "Prof. John Doe", // Default to a dummy faculty name
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onStartAttendance(formData);
+  };
+
+  return (
+    <div className="form-container">
+      <h2>Start Attendance</h2>
+      <form onSubmit={handleSubmit}>
+        <label htmlFor="date">Date:</label>
+        <input
+          type="date"
+          id="date"
+          name="date"
+          value={formData.date}
+          onChange={handleChange}
+          required
+        />
+
+        <label htmlFor="period">Period:</label>
+        <select
+          id="period"
+          name="period"
+          value={formData.period}
+          onChange={handleChange}
+        >
+          {Array.from({ length: 7 }, (_, i) => (
+            <option key={i} value={i + 1}>
+              Period {i + 1}
+            </option>
+          ))}
+        </select>
+
+        <label htmlFor="section">Section:</label>
+        <select
+          id="section"
+          name="section"
+          value={formData.section}
+          onChange={handleChange}
+        >
+          {["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"].map((section) => (
+            <option key={section} value={section}>
+              Section {section}
+            </option>
+          ))}
+        </select>
+
+        <label htmlFor="branch">Branch:</label>
+        <select
+          id="branch"
+          name="branch"
+          value={formData.branch}
+          onChange={handleChange}
+        >
+          {["Mechanical", "Civil", "Electrical", "Computer Science", "Electronics", "Biotechnology", "Chemical", "Architecture", "Management"].map((branch) => (
+            <option key={branch} value={branch}>
+              {branch}
+            </option>
+          ))}
+        </select>
+
+        <label htmlFor="faculty">Faculty Name:</label>
+        <select
+          id="faculty"
+          name="faculty"
+          value={formData.faculty}
+          onChange={handleChange}
+        >
+          {["Prof. John Doe", "Prof. Jane Smith", "Prof. Michael Brown", "Prof. Emily Davis", "Prof. Daniel Lee"].map((faculty) => (
+            <option key={faculty} value={faculty}>
+              {faculty}
+            </option>
+          ))}
+        </select>
+
+        <button type="submit">Start Attendance</button>
+      </form>
+    </div>
+  );
+};
+
+export default AttendanceForm;
 
