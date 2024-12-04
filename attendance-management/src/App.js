@@ -1,124 +1,76 @@
 import React, { useState } from "react";
-import { students as studentData } from "./data/students";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import AttendanceForm from "./components/AttendanceForm";
 import StudentList from "./components/StudentList";
-import { jsPDF } from "jspdf";
+import Login from "./components/Login";
+import SignUp from "./components/SignUp";
 
 const App = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [users, setUsers] = useState([
+    { username: "admin", password: "password123" }, // Default admin user
+  ]);
   const [attendanceDetails, setAttendanceDetails] = useState(null);
-  const [students, setStudents] = useState(studentData);
-  const [submittedData, setSubmittedData] = useState(null);
+
+  const handleLogin = (username, password) => {
+    const user = users.find(
+      (user) => user.username === username && user.password === password
+    );
+    if (user) {
+      setIsAuthenticated(true);
+    } else {
+      alert("Invalid credentials! Please try again.");
+    }
+  };
+
+  const handleSignUp = (newUser) => {
+    setUsers((prevUsers) => [...prevUsers, newUser]);
+    alert("Sign-up successful! Please log in.");
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setAttendanceDetails(null);
+  };
 
   const handleStartAttendance = (details) => {
     setAttendanceDetails(details);
   };
 
-  const toggleAttendance = (id) => {
-    setStudents((prevStudents) =>
-      prevStudents.map((student) =>
-        student.id === id ? { ...student, present: !student.present } : student
-      )
-    );
-  };
-
-  const handleSubmit = () => {
-    setSubmittedData({
-      ...attendanceDetails,
-      attendance: students.map(({ id, name, present }) => ({
-        id,
-        name,
-        status: present ? "Present" : "Absent",
-      })),
-    });
-    setAttendanceDetails(null); // Reset form
-    setStudents(studentData); // Reset students list
-  };
-
-  const handleSaveAsPDF = () => {
-    if (!submittedData) return;
-
-    const doc = new jsPDF();
-
-    doc.setFontSize(16);
-    doc.text("Attendance Report", 20, 20);
-
-    doc.setFontSize(12);
-    doc.text(`Date: ${submittedData.date}`, 20, 30);
-    doc.text(`Period: ${submittedData.period}`, 20, 40);
-    doc.text(`Section: ${submittedData.section}`, 20, 50);
-    doc.text(`Branch: ${submittedData.branch}`, 20, 60);
-    doc.text(`Faculty: ${submittedData.faculty}`, 20, 70);
-
-    doc.text("Attendance Details:", 20, 80);
-    let yPosition = 90;
-
-    submittedData.attendance.forEach((entry) => {
-      doc.text(`${entry.name} - ${entry.status}`, 20, yPosition);
-      yPosition += 10;
-    });
-
-    doc.save("attendance_report.pdf");
-  };
-
   return (
-    <div className="App">
-      <h1>Attendance Management</h1>
-      {!attendanceDetails ? (
-        <AttendanceForm onStartAttendance={handleStartAttendance} />
-      ) : (
-        <div>
-          <h2>Period: {attendanceDetails.period}</h2>
-          <p>
-            <strong>Date:</strong> {attendanceDetails.date}
-          </p>
-          <p>
-            <strong>Section:</strong> {attendanceDetails.section}
-          </p>
-          <p>
-            <strong>Branch:</strong> {attendanceDetails.branch}
-          </p>
-          <p>
-            <strong>Faculty:</strong> {attendanceDetails.faculty}
-          </p>
-          <StudentList
-            students={students}
-            toggleAttendance={toggleAttendance}
-            onSubmit={handleSubmit}
-          />
-        </div>
-      )}
-
-      {submittedData && (
-        <div style={{ marginTop: "30px" }}>
-          <h2>Submitted Data</h2>
-          <p>
-            <strong>Date:</strong> {submittedData.date}
-          </p>
-          <p>
-            <strong>Period:</strong> {submittedData.period}
-          </p>
-          <p>
-            <strong>Section:</strong> {submittedData.section}
-          </p>
-          <p>
-            <strong>Branch:</strong> {submittedData.branch}
-          </p>
-          <p>
-            <strong>Faculty:</strong> {submittedData.faculty}
-          </p>
-          <ul>
-            {submittedData.attendance.map((entry) => (
-              <li key={entry.id}>
-                {entry.name} - {entry.status}
-              </li>
-            ))}
-          </ul>
-          <button onClick={handleSaveAsPDF} className="save-btn">
-            Save as PDF
-          </button>
-        </div>
-      )}
-    </div>
+    <Router>
+      <div>
+        {!isAuthenticated ? (
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" />} />
+            <Route path="/login" element={<Login onLogin={handleLogin} />} />
+            <Route path="/signup" element={<SignUp onSignUp={handleSignUp} />} />
+          </Routes>
+        ) : (
+          <>
+            <button onClick={handleLogout} className="logout-btn">
+              Logout
+            </button>
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  attendanceDetails ? (
+                    <StudentList
+                      details={attendanceDetails}
+                      onAttendanceComplete={() => setAttendanceDetails(null)}
+                    />
+                  ) : (
+                    <AttendanceForm onStartAttendance={handleStartAttendance} />
+                  )
+                }
+              />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </>
+        )}
+      </div>
+    </Router>
   );
 };
 
